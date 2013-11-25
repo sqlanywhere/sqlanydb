@@ -2,11 +2,14 @@
 .. Copyright (c) 2013 SAP AG or an SAP affiliate company. All rights reserved.
 .. ***************************************************************************
 
+sqlanydb
+========
+
 This package provides a python interface to the SQL Anywhere database
 server. This interface conforms to PEP 249.
 
 Requirements
-============
+------------
 Before installing the sqlanydb interface please make sure the
 following components are installed on your system.
 
@@ -15,7 +18,7 @@ following components are installed on your system.
 * SQL Anywhere 10 or higher
 
 Installing the sqlanydb module
-==============================
+------------------------------
 Run the following command as an administrative user to install
 sqlanydb::
 
@@ -26,7 +29,7 @@ Alternatively, you can use pip::
     pip install sqlanydb
 
 Testing the sqlanydb module
-===========================
+---------------------------
 To test that the Python interface to SQL Anywhere is working correctly
 first start the demo database included with your SQL Anywhere
 installation and then create a file named test_sqlany.py with the
@@ -46,10 +49,10 @@ Run the test script and ensure that you get the expected output::
     SQL Anywhere says: Hello, world!
 
 License
-=======
+-------
 This package is licensed under the terms of the Apache License, Version 2.0
 
 Feedback and Questions
-======================
+----------------------
 For feedback on this project, or for general questions about using SQL Anywhere
 please use the SQL Anywhere Forum at http://sqlanywhere-forum.sybase.com/
