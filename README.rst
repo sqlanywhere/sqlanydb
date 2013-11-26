@@ -50,7 +50,8 @@ Run the test script and ensure that you get the expected output::
 
 License
 -------
-This package is licensed under the terms of the Apache License, Version 2.0
+This package is licensed under the terms of the Apache License, Version 2.0. See
+the LICENSE file for details.
 
 Feedback and Questions
 ----------------------
