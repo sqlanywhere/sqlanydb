@@ -56,4 +56,4 @@ the LICENSE file for details.
 Feedback and Questions
 ----------------------
 For feedback on this project, or for general questions about using SQL Anywhere
-please use the SQL Anywhere Forum at http://sqlanywhere-forum.sybase.com/
+please use the SQL Anywhere Forum at http://sqlanywhere-forum.sap.com/
