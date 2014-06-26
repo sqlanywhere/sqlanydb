@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 # While not a requirement of the license, if you do modify this file, we
-# would appreciate hearing about it.   Please email sqlany_interfaces@sybase.com
+# would appreciate hearing about it.   Please email sqlany_interfaces@sap.com
 
 
 """SQLAnydb - A DB API v2.0 compatible interface to SQL Anywhere.
@@ -25,7 +25,7 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.5'
+__version__ = '1.0.6'
 
 import os
 import sys
@@ -250,6 +250,8 @@ class DBAPISet(frozenset):
     def __ne__(self, other):
         return not self == other
 
+    def __hash__(self):
+        return frozenset.__hash__(self)
 
 STRING    = DBAPISet([DT_VARCHAR,
                       DT_FIXCHAR,
@@ -342,6 +344,7 @@ def standardErrorHandler(connection, cursor, errorclass, errorvalue):
         raise errorclass(errorvalue)
 
 
+# format types indexed by A_* values
 format = 'xxxdqQiIhHbB'
 
 def mk_valueof(raw, char_set):
@@ -383,7 +386,7 @@ def mk_assign(char_set):
             elif isinstance(value, str):
                 value = value.encode(char_set)
             else:
-                value = str(value)
+                value = str(value).encode(char_set)
             size = length = len(value)
             if param.direction != DD_INPUT:
                 if size < param.value.buffer_size:
@@ -440,6 +443,8 @@ class Root(object):
                     vers = None
                 return vers
             self.api.sqlany_client_version = client_version
+        except InterfaceError:
+            raise
         except:
             if (not self.api.sqlany_init(name.encode('utf-8'), API_VERSION, byref(ver))):
                 raise InterfaceError("dbcapi version %d required." %
@@ -483,7 +488,7 @@ class Connection(object):
 
         self.parent, self.api = parent, parent.api
         self.c = self.api.sqlany_new_connection();
-        params = ';'.join(kw+'='+arg for kw, arg in v3list(kwargs.items()))
+        params = ';'.join(kw+'='+arg for kw, arg in v3list(list(kwargs.items())))
         char_set = 'utf-8'
         if isinstance(params, str):
             params = params.encode(char_set)
@@ -588,7 +593,7 @@ class Cursor(object):
         def __init__(self,types):
             def find_converter(t):
                 return CONVERSION_CALLBACKS.get(t, lambda x: x)
-            self.converters = v3list(map(find_converter, types))
+            self.converters = v3list(list(map(find_converter, types)))
 
         def gen(self,values):
             for converter, value in zip(self.converters, values):
@@ -657,7 +662,7 @@ class Cursor(object):
     
     def columns(self):
         info = ColumnInfo()
-        for i in xrange(self.api.sqlany_num_cols(self.get_stmt())):
+        for i in range(self.api.sqlany_num_cols(self.get_stmt())):
             self.api.sqlany_get_column_info(self.get_stmt(), i, byref(info))
             yield ((info.name.decode('utf-8'),
                    ToPyType[info.native_type],
@@ -691,7 +696,7 @@ class Cursor(object):
                     self.handleerror(*self.parent.error())
                 
                 try:
-                    self.description, types = v3list(zip(*self.columns()))
+                    self.description, types = v3list(list(zip(*self.columns())))
                     rowcount = self.api.sqlany_num_rows(self.stmt)
                     self.converter = self.TypeConverter(types)
                 except ValueError:
@@ -719,7 +724,7 @@ class Cursor(object):
 
     def values(self):
         value = DataValue()
-        for i in xrange(self.api.sqlany_num_cols(self.get_stmt())):
+        for i in range(self.api.sqlany_num_cols(self.get_stmt())):
             rc = self.api.sqlany_get_column(self.get_stmt(), i, byref(value))
             if rc < 0:
                 # print "truncation of column %d"%i
@@ -732,13 +737,13 @@ class Cursor(object):
 
         while self.api.sqlany_fetch_next(self.get_stmt()):
             self.handleerror(*self.parent.error())
-            yield tuple(self.converter.gen(v3list(self.values())))
+            yield tuple(self.converter.gen(v3list(list(self.values()))))
         self.handleerror(*self.parent.error())
 
     def fetchmany(self, size=None):
         if size is None:
             size = self.arraysize
-        return [row for i,row in zip(xrange(size), self.rows())]
+        return [row for i,row in zip(range(size), self.rows())]
     
     def fetchone(self):
         rows = self.fetchmany(size=1)
