@@ -28,6 +28,69 @@ Alternatively, you can use pip::
 
     pip install sqlanydb
 
+Converter Functions
+-------------------
+This library wraps around the sqlanydb ``dbcapi`` C library. When retrieving 
+values from the database, the C API returns one of these types:
+
+* A_INVALID_TYPE
+* A_BINARY      
+* A_STRING      
+* A_DOUBLE      
+* A_VAL64       
+* A_UVAL64      
+* A_VAL32       
+* A_UVAL32      
+* A_VAL16       
+* A_UVAL16      
+* A_VAL8        
+* A_UVAL8       
+
+Other types are returned as the above types. For example, the NUMERIC type is 
+returned as a string. 
+
+To have ``sqlanydb`` return a different or custom python object, you can register 
+callbacks with the ``sqlanydb`` module, using 
+``register_converter(datatype, callback)``. Callback is a function that takes
+one argument, the type to be converted, and should return the converted value.
+Datatype is one of the ``DT_`` variables present in the module.
+
+The types available to register a converter for:
+
+* DT_NOTYPE       
+* DT_DATE         
+* DT_TIME         
+* DT_TIMESTAMP    
+* DT_VARCHAR      
+* DT_FIXCHAR      
+* DT_LONGVARCHAR  
+* DT_STRING       
+* DT_DOUBLE       
+* DT_FLOAT        
+* DT_DECIMAL      
+* DT_INT          
+* DT_SMALLINT     
+* DT_BINARY       
+* DT_LONGBINARY   
+* DT_TINYINT      
+* DT_BIGINT       
+* DT_UNSINT       
+* DT_UNSSMALLINT  
+* DT_UNSBIGINT    
+* DT_BIT          
+* DT_LONGNVARCHAR 
+
+For example, to have NUMERIC types be returned as a python Decimal object::
+
+
+    import decimal
+
+    def decimal_callback(valueToConvert):
+        return decimal.Decimal(valueToConvert)
+
+    sqlanydb.register_converter(sqlanydb.DT_DECIMAL, decimal_callback)
+
+
 Testing the sqlanydb module
 ---------------------------
 To test that the Python interface to SQL Anywhere is working correctly

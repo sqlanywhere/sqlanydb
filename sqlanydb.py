@@ -25,12 +25,16 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.6'
+__version__ = '1.0.6.1'
 
 import os
 import sys
 import atexit
 import time
+import logging
+
+
+
 try:
     import exceptions
     # pre 3.0
@@ -45,6 +49,8 @@ except:
 import codecs
 from ctypes import *
 from struct import pack, unpack, calcsize
+
+lg = logging.getLogger(__name__)
 
 API_VERSION = 1
 API_VERSION_EX = 2
@@ -408,25 +414,40 @@ paramstyle   = 'qmark'
 __all__ = [ 'threadsafety', 'apilevel', 'paramstyle', 'connect'] 
 
 def load_library(*names):
+
     for name in names:
         try:
-            return init_sacapi(cdll.LoadLibrary(name))
-        except OSError:
+            dll = cdll.LoadLibrary(name)
+            lg.debug("Successfully loaded dbcapi library '%s' with name '%s'", dll, name)
+            return init_sacapi(dll)
+        except OSError as ose:
             continue
     raise InterfaceError("Could not load dbcapi.  Tried: " + ','.join(names))
 
 
 class Root(object):
     def __init__(self, name):
+
+        lg.debug("Attempting to load dbcapi library")
         self.api = load_library('dbcapi.dll', 'libdbcapi_r.so',
                                 'libdbcapi_r.dylib')
         ver = c_uint(0)
         try:
             self.api.sqlany_init_ex.restype = POINTER(c_int)
+            lg.debug("Attempting to initalize dbcapi context (self.api.sqlany_init_ex) with arguments:" \
+                " app name: '%s', api version: '%s'",
+                name, API_VERSION_EX)
             context = self.api.sqlany_init_ex(name.encode('utf-8'), API_VERSION_EX, byref(ver))
             if not context:
-                raise InterfaceError("dbcapi version %d required." %
+                lg.error("Failed to initalize dbcapi context (self.api.sqlany_init_ex returned NULL)," \
+                    "perhaps you are missing some required sqlanywhere libaries?")
+
+                raise InterfaceError("Failed to initalize dbcapi context, dbcapi version %d required." \
+                    " Perhaps you are missing some sqlanywhere libaries?" %
                         API_VERSION_EX)
+            else:
+                lg.debug("Initalization of dbcapi context successful, max api version supported: %s", ver)
+
             def new_connection():
                 return self.api.sqlany_new_connection_ex(context)
             self.api.sqlany_new_connection = new_connection
@@ -456,7 +477,11 @@ class Root(object):
         atexit.register(self.__del__)
 
     def __del__(self):
-        if self.api:
+
+        # if we fail to load the library, then we won't get a chance
+        # to even set the 'api' instance variable
+        if hasattr(self, "api") and self.api:
+            lg.debug("__del__ called on sqlany.Root object, finalizng dbcapi context")
             self.api.sqlany_fini()
             self.api = None
 
@@ -467,8 +492,21 @@ def connect(*args, **kwargs):
 
 
 class Connection(object):
+
+    # cache the api object so we don't have to load and unload every single time
+    cls_parent = None
     
-    def __init__(self, args, kwargs, parent = Root("PYTHON")):
+    def __init__(self, args, kwargs, parent = None):
+
+        # make it so we don't load Root() and therefore the 
+        # dbcapi C library just on import
+        if parent == None:
+
+            # cache the Root() object so we don't load it every time
+            if Connection.cls_parent == None:
+                parent = Connection.cls_parent = Root("PYTHON")
+            else:
+                parent = Connection.cls_parent
 
         self.Error = Error
         self.Warning = Warning
@@ -515,7 +553,9 @@ class Connection(object):
             self.handleerror(*error)
 
     def __del__(self):
-        if self.c:
+        # if we fail to load the library, then we won't get a chance
+        # to even set the 'c' instance variable
+        if hasattr(self, "c") and self.c:
             self.close()
 
 
