@@ -15,7 +15,7 @@ following components are installed on your system.
 
 * Python 2.4 or greater
 * Python ctypes module if missing
-* SQL Anywhere 10 or higher
+* SQL Anywhere 10 or higher      
 
 Installing the sqlanydb module
 ------------------------------
