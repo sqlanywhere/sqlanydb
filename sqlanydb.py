@@ -1,4 +1,4 @@
-# Copyright 2015 SAP SE or an SAP affiliate company.
+# Copyright 2016 SAP SE or an SAP affiliate company.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.6.1'
+__version__ = '1.0.7'
 
 import os
 import sys
@@ -302,52 +302,71 @@ ToPyType = {DT_DATE         : DATE,
 
 
 class Error(Exception):
-    pass
+    def __init__(self,err,sqlcode=0):
+        self._errortext = err
+        self._errorcode = sqlcode
+    @property
+    def errortext(self): return self._errortext
+    @property
+    def errorcode(self): return self._errorcode
 
 class Warning(Exception):
     """Raise for important warnings like data truncation while inserting."""
-    pass
+    def __init__(self,err,sqlcode=0):
+        self._errortext = err
+        self._errorcode = sqlcode
+    @property
+    def errortext(self): return self._errortext
+    @property
+    def errorcode(self): return self._errorcode
 
 class InterfaceError(Error):
     """Raise for interface, not database, related errors."""
-    pass
+    def __init__(self, *args):
+        super(Error,self).__init__(*args)
 
 class DatabaseError(Error):
-    pass
+    def __init__(self, *args):
+        super(Error,self).__init__(*args)
 
 class InternalError(DatabaseError):
     """Raise for internal errors: cursor not valid, etc."""
-    pass
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
 
 class OperationalError(DatabaseError):
     """Raise for database related errors, not under programmer's control:
     unexpected disconnect, memory allocation error, etc."""
-    pass
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
 
 class ProgrammingError(DatabaseError):
     """Raise for programming errors: table not found, incorrect syntax, etc."""
-    pass
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
 
 class IntegrityError(DatabaseError):
     """Raise for database constraint failures:  missing primary key, etc."""
-    pass
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
 
 class DataError(DatabaseError):
-    pass
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
 
 class NotSupportedError(DatabaseError):
     """Raise for methods or APIs not supported by database."""
-    pass
-
+    def __init__(self, *args):
+        super(DatabaseError,self).__init__(*args)
  
-def standardErrorHandler(connection, cursor, errorclass, errorvalue):
+def standardErrorHandler(connection, cursor, errorclass, errorvalue, sqlcode=0):
     error=(errorclass, errorvalue)
     if connection:
         connection.messages.append(error)
         if cursor:
             cursor.messages.append(error)
     if errorclass != Warning:
-        raise errorclass(errorvalue)
+        raise errorclass(errorvalue,sqlcode)
 
 
 # format types indexed by A_* values
@@ -416,6 +435,8 @@ __all__ = [ 'threadsafety', 'apilevel', 'paramstyle', 'connect']
 def load_library(*names):
 
     for name in names:
+        if name is None or name == '':
+            continue
         try:
             dll = cdll.LoadLibrary(name)
             lg.debug("Successfully loaded dbcapi library '%s' with name '%s'", dll, name)
@@ -429,7 +450,7 @@ class Root(object):
     def __init__(self, name):
 
         lg.debug("Attempting to load dbcapi library")
-        self.api = load_library('dbcapi.dll', 'libdbcapi_r.so',
+        self.api = load_library(os.getenv( 'SQLANY_API_DLL', None ), 'dbcapi.dll', 'libdbcapi_r.so',
                                 'libdbcapi_r.dylib')
         ver = c_uint(0)
         try:
@@ -559,14 +580,14 @@ class Connection(object):
             self.close()
 
 
-    def handleerror(self, errorclass, errorvalue):
+    def handleerror(self, errorclass, errorvalue, sqlcode):
         if errorclass:
             eh = self.errorhandler or standardErrorHandler
-            eh(self, None, errorclass, errorvalue)
+            eh(self, None, errorclass, errorvalue, sqlcode)
 
     def con(self):
         if not self.c:
-            self.handleerror(InterfaceError, "not connected")
+            self.handleerror(InterfaceError, "not connected", -101)
         return self.c
 
     def commit(self):
@@ -582,7 +603,7 @@ class Connection(object):
         try:
             return self.api.sqlany_cancel(self.con())
         except AttributeError:
-            self.handleerror(InterfaceError, "cancel not supported")
+            self.handleerror(InterfaceError, "cancel not supported", -1965)
 
     def mk_error():
         buf = create_string_buffer(256)
@@ -590,13 +611,13 @@ class Connection(object):
         def error(self):
             rc = self.api.sqlany_error(self.con(), buf, buf_size)
             if rc == 0:
-                return (None, None)
+                return (None, None, 0)
             elif rc > 0:
-                return (Warning, buf.value)
+                return (Warning, buf.value, rc)
             elif rc in (-193,-194,-195,-196):
-                return (IntegrityError, buf.value)
+                return (IntegrityError, buf.value, rc)
             else:
-                return (OperationalError, buf.value)
+                return (OperationalError, buf.value, rc)
         return error
 
     error = mk_error()
@@ -652,10 +673,10 @@ class Cursor(object):
         self.__stmt = None
         self.description = None
 
-    def handleerror(self, errorclass, errorvalue):
+    def handleerror(self, errorclass, errorvalue, sqlcode):
         if errorclass:
             eh = self.errorhandler or standardErrorHandler
-            eh(self.parent, self, errorclass, errorvalue)
+            eh(self.parent, self, errorclass, errorvalue, sqlcode)
 
     def __stmt_get(self):
         if self.__stmt is None:
@@ -674,7 +695,7 @@ class Cursor(object):
 
     def con(self):
         if not self.parent:
-            self.handleerror(InterfaceError, "not connected")
+            self.handleerror(InterfaceError, "not connected", -101)
         return self.parent.con()
 
     def get_stmt(self):
@@ -773,7 +794,7 @@ class Cursor(object):
     
     def rows(self):
         if not self.description:
-            self.handleerror(InterfaceError, "no result set")
+            self.handleerror(InterfaceError, "no result set", -872)
 
         while self.api.sqlany_fetch_next(self.get_stmt()):
             self.handleerror(*self.parent.error())
