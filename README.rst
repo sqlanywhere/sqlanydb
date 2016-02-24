@@ -13,7 +13,7 @@ Requirements
 Before installing the sqlanydb interface please make sure the
 following components are installed on your system.
 
-* Python 2.4 or greater
+* Python 2.4 or greater (including Python 3.x)
 * Python ctypes module if missing
 * SQL Anywhere 10 or higher
 
