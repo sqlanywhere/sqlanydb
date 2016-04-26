@@ -25,7 +25,7 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.7'
+__version__ = '1.0.8'
 
 import os
 import sys
@@ -309,6 +309,11 @@ class Error(Exception):
     def errortext(self): return self._errortext
     @property
     def errorcode(self): return self._errorcode
+    def __repr__(self):
+        return "%s(%s, %s)" % (self.__class__.__name__, repr(self.errortext),
+                               repr(self.errorcode))
+    def __str__(self):
+        return repr((self.errortext, self.errorcode))
 
 class Warning(Exception):
     """Raise for important warnings like data truncation while inserting."""
@@ -319,45 +324,50 @@ class Warning(Exception):
     def errortext(self): return self._errortext
     @property
     def errorcode(self): return self._errorcode
+    def __repr__(self):
+        return "%s(%s, %s)" % (self.__class__.__name__, repr(self.errortext),
+                               repr(self.errorcode))
+    def __str__(self):
+        return repr((self.errortext, self.errorcode))
 
 class InterfaceError(Error):
     """Raise for interface, not database, related errors."""
     def __init__(self, *args):
-        super(Error,self).__init__(*args)
+        super(InterfaceError,self).__init__(*args)
 
 class DatabaseError(Error):
     def __init__(self, *args):
-        super(Error,self).__init__(*args)
+        super(DatabaseError,self).__init__(*args)
 
 class InternalError(DatabaseError):
     """Raise for internal errors: cursor not valid, etc."""
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(InternalError,self).__init__(*args)
 
 class OperationalError(DatabaseError):
     """Raise for database related errors, not under programmer's control:
     unexpected disconnect, memory allocation error, etc."""
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(OperationalError,self).__init__(*args)
 
 class ProgrammingError(DatabaseError):
     """Raise for programming errors: table not found, incorrect syntax, etc."""
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(ProgrammingError,self).__init__(*args)
 
 class IntegrityError(DatabaseError):
     """Raise for database constraint failures:  missing primary key, etc."""
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(IntegrityError,self).__init__(*args)
 
 class DataError(DatabaseError):
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(DataError,self).__init__(*args)
 
 class NotSupportedError(DatabaseError):
     """Raise for methods or APIs not supported by database."""
     def __init__(self, *args):
-        super(DatabaseError,self).__init__(*args)
+        super(NotSupportedError,self).__init__(*args)
  
 def standardErrorHandler(connection, cursor, errorclass, errorvalue, sqlcode=0):
     error=(errorclass, errorvalue)
