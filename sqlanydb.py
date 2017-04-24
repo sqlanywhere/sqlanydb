@@ -25,7 +25,7 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.8'
+__version__ = '1.0.9'
 
 import os
 import sys
