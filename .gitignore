@@ -1,0 +1,4 @@
+# for python build
+build
+dist
+sqlanydb.egg-info

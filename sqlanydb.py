@@ -1,18 +1,18 @@
 # Copyright 2016 SAP SE or an SAP affiliate company.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# 
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # While not a requirement of the license, if you do modify this file, we
 # would appreciate hearing about it.   Please email sqlany_interfaces@sap.com
 
@@ -237,7 +237,7 @@ def init_sacapi(api):
     defun("sqlany_clear_error",
         None, p_sqlany_connection)
     return api
- 
+
 
 # NB: The preceding must match those in sacapi.h for the specified API_VERSION!
 
@@ -368,7 +368,7 @@ class NotSupportedError(DatabaseError):
     """Raise for methods or APIs not supported by database."""
     def __init__(self, *args):
         super(NotSupportedError,self).__init__(*args)
- 
+
 def standardErrorHandler(connection, cursor, errorclass, errorvalue, sqlcode=0):
     error=(errorclass, errorvalue)
     if connection:
@@ -440,7 +440,7 @@ threadsafety = 1
 apilevel     = '2.0'
 paramstyle   = 'qmark'
 
-__all__ = [ 'threadsafety', 'apilevel', 'paramstyle', 'connect'] 
+__all__ = [ 'threadsafety', 'apilevel', 'paramstyle', 'connect']
 
 def load_library(*names):
 
@@ -453,7 +453,7 @@ def load_library(*names):
             return init_sacapi(dll)
         except OSError as ose:
             continue
-    raise InterfaceError("Could not load dbcapi.  Tried: " + ','.join(names))
+    raise InterfaceError("Could not load dbcapi.  Tried: " + ','.join(map(str, names)))
 
 
 class Root(object):
@@ -526,10 +526,10 @@ class Connection(object):
 
     # cache the api object so we don't have to load and unload every single time
     cls_parent = None
-    
+
     def __init__(self, args, kwargs, parent = None):
 
-        # make it so we don't load Root() and therefore the 
+        # make it so we don't load Root() and therefore the
         # dbcapi C library just on import
         if parent == None:
 
@@ -634,7 +634,7 @@ class Connection(object):
 
     def clear_error(self):
         return self.api.sqlany_clear_error(self.con())
-    
+
     def close(self):
         self.messages = []
         c = self.con()
@@ -652,7 +652,7 @@ class Connection(object):
         return x
 
     def __enter__(self): return self.cursor()
-    
+
     def __exit__(self, exc, value, tb):
         if exc:
             self.rollback()
@@ -710,7 +710,7 @@ class Cursor(object):
 
     def get_stmt(self):
         return self.stmt
-    
+
     def new_statement(self, operation):
         self.free_statement()
         self.stmt = self.api.sqlany_prepare(self.con(), operation)
@@ -730,7 +730,7 @@ class Cursor(object):
             if remove:
                 p.cursors.remove(self)
             self.free_statement()
-    
+
     def columns(self):
         info = ColumnInfo()
         for i in range(self.api.sqlany_num_cols(self.get_stmt())):
@@ -743,7 +743,7 @@ class Cursor(object):
                    info.scale,
                    info.nullable),
                    info.native_type)
-    
+
     def executemany(self, operation, seq_of_parameters):
         self.messages = []
 
@@ -765,7 +765,7 @@ class Cursor(object):
                          for k, col in enumerate(parameters[:bind_count])]
                 if not self.api.sqlany_execute(self.stmt):
                     self.handleerror(*self.parent.error())
-                
+
                 try:
                     self.description, types = v3list(list(zip(*self.columns())))
                     rowcount = self.api.sqlany_num_rows(self.stmt)
@@ -785,10 +785,10 @@ class Cursor(object):
             raise
 
         return [(self.valueof)(param.value) for param in parms]
-    
+
     def execute(self, operation, parameters = ()):
         self.executemany(operation, [parameters])
-    
+
     def callproc(self, procname, parameters = ()):
         stmt = 'call '+procname+'('+','.join(len(parameters)*('?',))+')'
         return self.executemany(stmt, [parameters])
@@ -801,7 +801,7 @@ class Cursor(object):
                 # print "truncation of column %d"%i
                 self.handleerror(*self.parent.error())
             yield (self.valueof)(value)
-    
+
     def rows(self):
         if not self.description:
             self.handleerror(InterfaceError, "no result set", -872)
@@ -815,24 +815,24 @@ class Cursor(object):
         if size is None:
             size = self.arraysize
         return [row for i,row in zip(range(size), self.rows())]
-    
+
     def fetchone(self):
         rows = self.fetchmany(size=1)
         if rows:
             return rows[0]
         return None
-    
+
     def fetchall(self):
         return list(self.rows())
-    
+
     def nextset(self):
         self.messages = []
         return self.api.sqlany_get_next_result(self.get_stmt()) or None
-    
+
     def setinputsizes(self, sizes):
         self.messages = []
         pass
-    
+
     def setoutputsize(self, sizes, column):
         self.messages = []
         pass
