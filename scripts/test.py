@@ -1,5 +1,5 @@
 # ***************************************************************************
-# Copyright (c) 2016 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2017 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
 #######################################################################
 # This sample code is provided AS IS, without warranty or liability

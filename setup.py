@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ***************************************************************************
-# Copyright (c) 2016 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2017 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
 
 r"""sqlanydb - pure Python SQL Anywhere database interface.
