@@ -571,6 +571,13 @@ class Connection(object):
                 char_set = cur.fetchone()[0]
                 if isinstance(char_set, bytes):
                     char_set = char_set.decode()
+					# respect the charset config in connect
+                    if(kwargs.get('charset')):
+                        char_set = kwargs['charset']
+					# iso_1 means iso-8859-1 in sql anywhere
+					# details see: http://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.help.sqlanywhere.12.0.1/dbadmin/determining-locale-natlang.html
+                    if(char_set=='iso_1'):
+                        char_set = 'iso-8859-1'
                 if codecs.lookup(char_set):
                     self.valueof = mk_valueof((A_BINARY,), char_set)
                     self.assign = mk_assign(char_set)
