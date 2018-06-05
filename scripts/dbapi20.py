@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ***************************************************************************
-# Copyright (c) 2017 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
 ''' Python DB API 2.0 driver compliance unit test suite. 
     

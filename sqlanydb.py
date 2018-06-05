@@ -1,4 +1,4 @@
-# Copyright 2017 SAP SE or an SAP affiliate company.
+# Copyright 2018 SAP SE or an SAP affiliate company.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -571,11 +571,8 @@ class Connection(object):
                 char_set = cur.fetchone()[0]
                 if isinstance(char_set, bytes):
                     char_set = char_set.decode()
-					# respect the charset config in connect
-                    if(kwargs.get('charset')):
-                        char_set = kwargs['charset']
-					# iso_1 means iso-8859-1 in sql anywhere
-					# details see: http://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.help.sqlanywhere.12.0.1/dbadmin/determining-locale-natlang.html
+                    # iso_1 means iso-8859-1 in sql anywhere
+                    # details see: http://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.help.sqlanywhere.12.0.1/dbadmin/determining-locale-natlang.html
                     if(char_set=='iso_1'):
                         char_set = 'iso-8859-1'
                 if codecs.lookup(char_set):
