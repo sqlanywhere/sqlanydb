@@ -403,7 +403,9 @@ def mk_assign(char_set):
         if is_null and param.direction == DD_INPUT:
             value = 0
         if param.value.type == A_INVALID_TYPE:
-            if isinstance(value, int):
+            if is_null and param.direction == DD_INPUT:
+                param.value.type = A_STRING
+            elif isinstance(value, int):
                 if abs(value) > 4294967295:
                     param.value.type = A_VAL64
                 else:

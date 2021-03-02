@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ***************************************************************************
-# Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
 ''' Python DB API 2.0 driver compliance unit test suite. 
     
@@ -144,6 +144,12 @@ class DatabaseAPI20Test(unittest.TestCase):
                 )
         except AttributeError:
             self.fail("No connect method found in self.driver module")
+
+    def dropTable(self,cursor,tableName):
+        try:
+            cursor.execute("drop table %s" % tableName)
+        except self.driver.Error, err:
+            pass
 
     def test_connect(self):
         con = self._connect()
@@ -855,4 +861,65 @@ class DatabaseAPI20Test(unittest.TestCase):
         self.failUnless(hasattr(self.driver,'ROWID'),
             'module.ROWID must be defined.'
             )
+
+    def test_nullTimestampWithTimeZone(self):
+        con = self._connect()
+        cur = con.cursor()
+        self.dropTable(cur, 'table_timestamp_with_timezone')
+        try:
+            cur.execute("create table table_timestamp_with_timezone (c timestamp with time zone null)")
+            cur.execute("insert into table_timestamp_with_timezone values(?)",(None,))
+        except self.driver.Error, err:
+            self.fail("error: %s" % str(err))
+        finally:
+            con.close()
+
+    def test_nullGeometry(self):
+        con = self._connect()
+        cur = con.cursor()
+        self.dropTable(cur, 'table_geometry')
+        try:
+            cur.execute("create table table_geometry (c st_geometry null)")
+            cur.execute("insert into table_geometry values(?)",(None,))
+        except self.driver.Error, err:
+            self.fail("error: %s" % str(err))
+        finally:
+            con.close()
+
+    def test_nullBinary(self):
+        con = self._connect()
+        cur = con.cursor()
+        self.dropTable(cur, 'table_binary')
+        try:
+            cur.execute("create table table_binary (c varbinary(128))")
+            cur.execute("insert into table_binary values(?)",(None,))
+        except self.driver.Error, err:
+            self.fail("error: %s" % str(err))
+        finally:
+            con.close()
+
+    def test_nullNumeric(self):
+        con = self._connect()
+        cur = con.cursor()
+        self.dropTable(cur, 'table_numeric')
+        try:
+            cur.execute("create table table_numeric (c numeric null)")
+            cur.execute("insert into table_numeric values(?)",(None,))
+        except self.driver.Error, err:
+            self.fail("error: %s" % str(err))
+        finally:
+            con.close()
+
+
+    def test_nullTimestamp(self):
+        con = self._connect()
+        cur = con.cursor()
+        self.dropTable(cur, 'table_timestamp')
+        try:
+            cur.execute("create table table_timestamp (c timestamp null)")
+            cur.execute("insert into table_timestamp values(?)",(None,))
+        except self.driver.Error, err:
+            self.fail("error: %s" % str(err))
+        finally:
+            con.close()
 

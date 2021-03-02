@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ***************************************************************************
-# Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
 #######################################################################
 # This sample code is provided AS IS, without warranty or liability
@@ -27,7 +27,7 @@ import unittest
 class test_sqlanydb(dbapi20.DatabaseAPI20Test):
     driver = sqlanydb
     connect_args = ()
-    connect_kw_args = dict(userid='dba', password='sql')
+    connect_kw_args = dict(userid='dba', password='sqlanydb_pw')
 
     def test_setoutputsize(self): pass
     def test_setoutputsize_basic(self): pass
