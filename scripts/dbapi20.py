@@ -148,7 +148,7 @@ class DatabaseAPI20Test(unittest.TestCase):
     def dropTable(self,cursor,tableName):
         try:
             cursor.execute("drop table %s" % tableName)
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             pass
 
     def test_connect(self):
@@ -869,7 +869,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         try:
             cur.execute("create table table_timestamp_with_timezone (c timestamp with time zone null)")
             cur.execute("insert into table_timestamp_with_timezone values(?)",(None,))
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             self.fail("error: %s" % str(err))
         finally:
             con.close()
@@ -881,7 +881,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         try:
             cur.execute("create table table_geometry (c st_geometry null)")
             cur.execute("insert into table_geometry values(?)",(None,))
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             self.fail("error: %s" % str(err))
         finally:
             con.close()
@@ -893,7 +893,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         try:
             cur.execute("create table table_binary (c varbinary(128))")
             cur.execute("insert into table_binary values(?)",(None,))
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             self.fail("error: %s" % str(err))
         finally:
             con.close()
@@ -905,7 +905,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         try:
             cur.execute("create table table_numeric (c numeric null)")
             cur.execute("insert into table_numeric values(?)",(None,))
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             self.fail("error: %s" % str(err))
         finally:
             con.close()
@@ -918,7 +918,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         try:
             cur.execute("create table table_timestamp (c timestamp null)")
             cur.execute("insert into table_timestamp values(?)",(None,))
-        except self.driver.Error, err:
+        except self.driver.Error as err:
             self.fail("error: %s" % str(err))
         finally:
             con.close()

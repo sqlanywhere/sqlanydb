@@ -25,13 +25,14 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.10'
+__version__ = '1.0.13'
 
 import os
 import sys
 import atexit
 import time
 import logging
+import struct
 
 
 
@@ -74,6 +75,7 @@ DT_NOTYPE       = 0
 DT_DATE         = 384
 DT_TIME         = 388
 DT_TIMESTAMP    = 392
+DT_DATETIMEX    = 396
 DT_VARCHAR      = 448
 DT_FIXCHAR      = 452
 DT_LONGVARCHAR  = 456
@@ -274,13 +276,15 @@ NUMBER    = DBAPISet([DT_DOUBLE,
                       DT_TINYINT])
 DATE      = DBAPISet([DT_DATE])
 TIME      = DBAPISet([DT_TIME])
-TIMESTAMP = DBAPISet([DT_TIMESTAMP])
+TIMESTAMP = DBAPISet([DT_TIMESTAMP,
+                      DT_DATETIMEX])
 DATETIME  = TIMESTAMP
 ROWID     = DBAPISet()
 
 ToPyType = {DT_DATE         : DATE,
             DT_TIME         : TIME,
             DT_TIMESTAMP    : TIMESTAMP,
+            DT_DATETIMEX    : TIMESTAMP,
             DT_VARCHAR      : STRING,
             DT_FIXCHAR      : STRING,
             DT_LONGVARCHAR  : STRING,
@@ -444,7 +448,33 @@ paramstyle   = 'qmark'
 
 __all__ = [ 'threadsafety', 'apilevel', 'paramstyle', 'connect']
 
+def find_dbcapi_path():
+    for p in sys.path:
+        if os.path.isdir(p):
+            for f in os.listdir(p):
+                if f.lower() == 'dbcapi.dll':
+                    return p
+    return None
+
 def load_library(*names):
+    if sys.version_info >= (3, 8) and sys.platform == 'win32' and os.getenv('SQLANY_API_DLL') is None:
+        dbcapi_dir = None
+        if os.getenv('IQDIR17') is not None or os.getenv('SQLANY17') is not None:
+            if os.getenv('IQDIR17') is not None:
+                iqpath = os.getenv('IQDIR17')
+            else:
+                iqpath = os.getenv('SQLANY17')
+            pointersize = struct.calcsize("P") * 8
+            if pointersize == 64:
+                dbcapi_dir = os.path.join(iqpath, 'bin64')
+            else:
+                dbcapi_dir = os.path.join(iqpath, 'bin32')
+        else:
+            dbcapi_dir = find_dbcapi_path()
+        if dbcapi_dir is None:
+            raise InterfaceError("Could not find dbcapi.dll.  Please append the directory that contains dbcapi.dll to PYTHONPATH")
+        else:
+            os.add_dll_directory( dbcapi_dir )
 
     for name in names:
         if name is None or name == '':
@@ -459,6 +489,7 @@ def load_library(*names):
 
 
 class Root(object):
+    connections = []
     def __init__(self, name):
 
         lg.debug("Attempting to load dbcapi library")
@@ -511,12 +542,23 @@ class Root(object):
 
     def __del__(self):
 
+        # close all outstanding connections
+        myconn = self.connections[:]
+        for conn in myconn:
+            conn.close()
+
         # if we fail to load the library, then we won't get a chance
         # to even set the 'api' instance variable
         if hasattr(self, "api") and self.api:
             lg.debug("__del__ called on sqlany.Root object, finalizng dbcapi context")
             self.api.sqlany_fini()
             self.api = None
+
+    def add_conn(self, conn):
+        self.connections.append(conn)
+
+    def remove_conn(self, conn):
+        self.connections.remove(conn);
 
 
 def connect(*args, **kwargs):
@@ -583,6 +625,7 @@ class Connection(object):
                     self.char_set = char_set
             finally:
                 cur.close()
+            parent.add_conn(self)
         else:
             error = self.error()
             self.api.sqlany_free_connection(self.c)
@@ -594,7 +637,6 @@ class Connection(object):
         # to even set the 'c' instance variable
         if hasattr(self, "c") and self.c:
             self.close()
-
 
     def handleerror(self, errorclass, errorvalue, sqlcode):
         if errorclass:
@@ -644,12 +686,14 @@ class Connection(object):
     def close(self):
         self.messages = []
         c = self.con()
-        self.c = None
-        for x in self.cursors:
-            x.close(remove=False)
-        self.cursors = None
-        self.api.sqlany_disconnect(c)
-        self.api.sqlany_free_connection(c)
+        if self.c != None:
+            for x in self.cursors:
+                x.close(remove=False)
+            self.cursors = None
+            self.api.sqlany_disconnect(c)
+            self.api.sqlany_free_connection(c)
+            self.parent.remove_conn(self)
+            self.c = None
 
     def cursor(self):
         self.messages = []

@@ -61,6 +61,7 @@ The types available to register a converter for:
 * DT_DATE         
 * DT_TIME         
 * DT_TIMESTAMP    
+* DT_DATETIMEX    
 * DT_VARCHAR      
 * DT_FIXCHAR      
 * DT_LONGVARCHAR  
