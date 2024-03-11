@@ -1,7 +1,6 @@
 # ***************************************************************************
-# Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2024 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
-#######################################################################
 # This sample code is provided AS IS, without warranty or liability
 # of any kind.
 # 
@@ -9,19 +8,13 @@
 # without limitation, on the condition that you retain the foregoing
 # copyright notice and disclaimer as to the original code.
 # 
-#######################################################################
-# 
-# This sample program contains a hard-coded userid and password
-# to connect to the demo database. This is done to simplify the
-# sample program. The use of hard-coded passwords is strongly
-# discouraged in production code.  A best practice for production
-# code would be to prompt the user for the userid and password.
-#
-#######################################################################
-
+# ***************************************************************************
 import sqlanydb
-
-con = sqlanydb.connect(userid='dba', password='sql')
+try: input = raw_input
+except NameError: pass
+myuid = input("Enter your user ID: ")
+mypwd = input("Enter your password: ")
+con = sqlanydb.connect(userid=myuid, pwd=mypwd)
 cur = con.cursor()
 cur.execute('select count(*) from Employees')
 assert cur.fetchone()[0] > 0

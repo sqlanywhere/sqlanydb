@@ -25,7 +25,7 @@ to the sqlanywhere dbcapi library.
 
 """
 
-__version__ = '1.0.13'
+__version__ = '1.0.14'
 
 import os
 import sys
@@ -410,10 +410,10 @@ def mk_assign(char_set):
             if is_null and param.direction == DD_INPUT:
                 param.value.type = A_STRING
             elif isinstance(value, int):
-                if abs(value) > 4294967295:
-                    param.value.type = A_VAL64
+                if value >= 0:
+                    param.value.type = A_UVAL64
                 else:
-                    param.value.type = A_VAL32
+                    param.value.type = A_VAL64
             elif isinstance(value, float):
                 param.value.type = A_DOUBLE
             elif isinstance(value, Binary):

@@ -1,15 +1,12 @@
 # ***************************************************************************
-# Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+# Copyright (c) 2024 SAP SE or an SAP affiliate company. All rights reserved.
 # ***************************************************************************
-#######################################################################
-# 
 # This sample program contains a hard-coded userid and password
 # to connect to the demo database. This is done to simplify the
 # sample program. The use of hard-coded passwords is strongly
 # discouraged in production code.  A best practice for production
 # code would be to prompt the user for the userid and password.
-#
-#######################################################################
+# ***************************************************************************
 import sqlanydb
 import os, unittest
 from runtests import test_sqlanydb
